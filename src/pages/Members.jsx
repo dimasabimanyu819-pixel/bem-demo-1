@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, User, Briefcase } from 'lucide-react';
 
-const Member = () => {
+// UBAH NAMA KOMPONEN JADI Members
+const Members = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // --- DATA DUMMY STATIS (Agar muncul di Vercel) ---
+  // DATA DUMMY STATIS
   const [members] = useState([
     { id: 1, name: "Rizky Pratama", position: "Presiden Mahasiswa", image_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", department: "BPH" },
     { id: 2, name: "Siti Aisyah", position: "Wakil Presiden", image_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400", department: "BPH" },
@@ -19,30 +20,24 @@ const Member = () => {
     { id: 10, name: "Eka Putri", position: "Menteri PSDM", image_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400", department: "PSDM" },
   ]);
 
-  // Logic Filter Pencarian
   const filteredMembers = members.filter((member) =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.department.toLowerCase().includes(searchTerm.toLowerCase())
+    (member.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (member.position || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (member.department || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="min-h-screen bg-slate-50 pt-24 pb-20">
-      {/* Header Section */}
       <div className="bg-slate-900 text-white py-16 px-6 mb-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] opacity-20"></div>
         <div className="container mx-auto text-center relative z-10">
             <span className="text-blue-400 font-bold tracking-widest text-sm uppercase mb-2 inline-block px-4 py-1 bg-white/10 rounded-full">Our Team</span>
             <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Struktur Organisasi</h1>
-            <p className="text-slate-300 max-w-2xl mx-auto text-lg">Kenali orang-orang hebat yang bekerja di balik layar BEM UNIS untuk mewujudkan visi bersama.</p>
+            <p className="text-slate-300 max-w-2xl mx-auto text-lg">Kenali orang-orang hebat yang bekerja di balik layar BEM UNIS.</p>
         </div>
-        
-        {/* Search Bar Floating */}
         <div className="absolute -bottom-7 left-0 w-full px-6">
             <div className="max-w-xl mx-auto bg-white rounded-full shadow-xl flex items-center p-2 border border-slate-200">
-                <div className="p-3 text-slate-400">
-                    <Search size={20} />
-                </div>
+                <div className="p-3 text-slate-400"><Search size={20} /></div>
                 <input 
                     type="text" 
                     placeholder="Cari nama anggota atau jabatan..." 
@@ -53,50 +48,32 @@ const Member = () => {
         </div>
       </div>
 
-      {/* Grid Anggota */}
       <div className="container mx-auto px-6 mt-16">
-        {filteredMembers.length > 0 ? (
-            <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
-            >
-                {filteredMembers.map((member) => (
-                    <motion.div 
-                        key={member.id}
-                        initial={{ y: 20, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5 }}
-                        className="bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group"
-                    >
-                        <div className="aspect-[4/5] overflow-hidden relative bg-slate-200">
-                            {member.image_url ? (
-                                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                    <User size={64} />
-                                </div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-80"></div>
-                            
-                            <div className="absolute bottom-0 left-0 w-full p-6 text-white">
-                                <span className="inline-block px-3 py-1 bg-blue-600 text-[10px] font-bold uppercase tracking-wider rounded-full mb-2">
-                                    {member.department}
-                                </span>
-                                <h3 className="text-xl font-bold leading-tight mb-1">{member.name}</h3>
-                                <p className="text-slate-300 text-sm font-medium flex items-center gap-2">
-                                    <Briefcase size={12} /> {member.position}
-                                </p>
-                            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {filteredMembers.map((member) => (
+                <motion.div 
+                    key={member.id}
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl transition-all duration-300 group"
+                >
+                    <div className="aspect-[4/5] overflow-hidden relative bg-slate-200">
+                        <img src={member.image_url} alt={member.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-80"></div>
+                        <div className="absolute bottom-0 left-0 w-full p-6 text-white">
+                            <span className="inline-block px-3 py-1 bg-blue-600 text-[10px] font-bold uppercase tracking-wider rounded-full mb-2">{member.department}</span>
+                            <h3 className="text-xl font-bold leading-tight mb-1">{member.name}</h3>
+                            <p className="text-slate-300 text-sm font-medium flex items-center gap-2"><Briefcase size={12} /> {member.position}</p>
                         </div>
-                    </motion.div>
-                ))}
-            </motion.div>
-        ) : (
+                    </div>
+                </motion.div>
+            ))}
+        </div>
+        
+        {filteredMembers.length === 0 && (
             <div className="text-center py-20 text-slate-500">
-                <p className="text-xl font-medium">Tidak ditemukan anggota dengan nama tersebut.</p>
-                <button onClick={() => setSearchTerm('')} className="mt-4 text-blue-600 font-bold hover:underline">Reset Pencarian</button>
+                <p>Tidak ditemukan anggota dengan nama tersebut.</p>
             </div>
         )}
       </div>
@@ -104,4 +81,5 @@ const Member = () => {
   );
 };
 
+// EXPORT Members
 export default Members;
