@@ -1,137 +1,108 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Search, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, User, Briefcase } from 'lucide-react';
 
-// --- KOMPONEN TILT ---
-const TiltCard = ({ children, className }) => {
-  const x = useMotionValue(0); const y = useMotionValue(0);
-  const mouseX = useSpring(x, { stiffness: 150, damping: 15 });
-  const mouseY = useSpring(y, { stiffness: 150, damping: 15 });
-  function handleMouseMove({ currentTarget, clientX, clientY }) {
-    const { left, top, width, height } = currentTarget.getBoundingClientRect();
-    x.set((clientX - left) / width - 0.5); y.set((clientY - top) / height - 0.5);
-  }
-  function handleMouseLeave() { x.set(0); y.set(0); }
-  const rotateX = useTransform(mouseY, [-0.5, 0.5], [7, -7]);
-  const rotateY = useTransform(mouseX, [-0.5, 0.5], [-7, 7]);
-  return (
-    <motion.div onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className={`relative transition-all duration-300 ease-out ${className}`}>
-      <div style={{ transform: "translateZ(30px)" }} className="h-full w-full">{children}</div>
-    </motion.div>
+const Struktur = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // --- DATA DUMMY STATIS (Agar muncul di Vercel) ---
+  // Saya buatkan data yang lebih banyak agar terlihat seperti organisasi asli
+  const [members] = useState([
+    { id: 1, name: "Rizky Pratama", position: "Presiden Mahasiswa", image_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", department: "BPH" },
+    { id: 2, name: "Siti Aisyah", position: "Wakil Presiden", image_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400", department: "BPH" },
+    { id: 3, name: "Budi Santoso", position: "Sekretaris Jenderal", image_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400", department: "BPH" },
+    { id: 4, name: "Dewi Sartika", position: "Bendahara Umum", image_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400", department: "BPH" },
+    { id: 5, name: "Andi Saputra", position: "Menteri Dalam Negeri", image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400", department: "Kementerian Dalam Negeri" },
+    { id: 6, name: "Maya Indah", position: "Staff Dalam Negeri", image_url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400", department: "Kementerian Dalam Negeri" },
+    { id: 7, name: "Fajar Nugraha", position: "Menteri Luar Negeri", image_url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400", department: "Kementerian Luar Negeri" },
+    { id: 8, name: "Citra Kirana", position: "Menteri Kominfo", image_url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=400", department: "Kominfo" },
+    { id: 9, name: "Dimas Anggara", position: "Staff Kominfo", image_url: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?q=80&w=400", department: "Kominfo" },
+    { id: 10, name: "Eka Putri", position: "Menteri PSDM", image_url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400", department: "PSDM" },
+  ]);
+
+  // Logic Filter Pencarian
+  const filteredMembers = members.filter((member) =>
+    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    member.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
-};
-
-const Members = () => {
-  const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    axios.get('http://localhost/bem-api/backend/api.php?action=get_members')
-      .then(res => { setMembers(res.data); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  // 1. Grouping Member
-  const groupedMembers = members.reduce((groups, member) => {
-    const division = member.division || 'Lainnya'; // Default ke 'Lainnya' jika kosong
-    if (!groups[division]) groups[division] = [];
-    groups[division].push(member);
-    return groups;
-  }, {});
-
-  // 2. Logic Sorting (BPH Inti Wajib Paling Atas)
-  // Pastikan nama di sini SAMA PERSIS dengan yang diinput di Dashboard Admin
-  const divisionOrder = [
-      "BPH Inti", 
-      "Dinas Kominfo", 
-      "Dinas Advokasi", 
-      "Dinas Minat Bakat", 
-      "Dinas PSDM", 
-      "Dinas Sosmas", 
-      "Dinas Kastrat", 
-      "Lainnya"
-  ];
-
-  const sortedDivisions = Object.keys(groupedMembers).sort((a, b) => {
-     const indexA = divisionOrder.indexOf(a);
-     const indexB = divisionOrder.indexOf(b);
-     
-     // Jika tidak ada di list, taruh di paling bawah
-     const valA = indexA === -1 ? 999 : indexA;
-     const valB = indexB === -1 ? 999 : indexB;
-
-     return valA - valB;
-  });
 
   return (
-    <div className="bg-slate-50 min-h-screen pt-20 font-sans selection:bg-blue-600 selection:text-white">
-      
-      {/* HEADER */}
-      <section className="bg-[#020617] text-white py-24 relative overflow-hidden">
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-gradient-to-b from-transparent to-slate-900/80"></div>
-         
-         <div className="container mx-auto px-6 text-center relative z-10">
-            <span className="inline-block py-1 px-3 rounded-full bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">Our Team</span>
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-6">Struktur Organisasi</h1>
-            <p className="text-slate-300 text-lg max-w-2xl mx-auto font-light">Kenali orang-orang hebat yang bekerja di balik layar BEM UNIS untuk mewujudkan visi bersama.</p>
-         </div>
-      </section>
-
-      {/* SEARCH BAR (Floating) */}
-      <div className="container mx-auto px-6 -mt-8 relative z-20 mb-20">
-         <div className="bg-white/80 backdrop-blur-xl p-2 rounded-full shadow-2xl max-w-xl mx-auto flex items-center border border-white/50">
-            <div className="p-3 bg-slate-100 rounded-full text-slate-400 ml-1"><Search size={20}/></div>
-            <input 
-                type="text" 
-                placeholder="Cari nama anggota atau jabatan..." 
-                className="w-full bg-transparent outline-none text-slate-700 font-medium px-4 py-3 placeholder:text-slate-400"
-                onChange={(e) => setSearch(e.target.value)}
-            />
-         </div>
+    <div className="min-h-screen bg-slate-50 pt-24 pb-20">
+      {/* Header Section */}
+      <div className="bg-slate-900 text-white py-16 px-6 mb-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:40px_40px] opacity-20"></div>
+        <div className="container mx-auto text-center relative z-10">
+            <span className="text-blue-400 font-bold tracking-widest text-sm uppercase mb-2 inline-block px-4 py-1 bg-white/10 rounded-full">Our Team</span>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Struktur Organisasi</h1>
+            <p className="text-slate-300 max-w-2xl mx-auto text-lg">Kenali orang-orang hebat yang bekerja di balik layar BEM UNIS untuk mewujudkan visi bersama.</p>
+        </div>
+        
+        {/* Search Bar Floating */}
+        <div className="absolute -bottom-7 left-0 w-full px-6">
+            <div className="max-w-xl mx-auto bg-white rounded-full shadow-xl flex items-center p-2 border border-slate-200">
+                <div className="p-3 text-slate-400">
+                    <Search size={20} />
+                </div>
+                <input 
+                    type="text" 
+                    placeholder="Cari nama anggota atau jabatan..." 
+                    className="flex-1 outline-none text-slate-700 font-medium px-2 py-2"
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+        </div>
       </div>
 
-      {/* LIST MEMBER */}
-      <div className="container mx-auto px-6 pb-32">
-        {loading ? <p className="text-center text-slate-500 animate-pulse">Sedang memuat data...</p> : (
-            sortedDivisions.map((divName) => {
-                const divMembers = groupedMembers[divName].filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.position.toLowerCase().includes(search.toLowerCase()));
-                if(divMembers.length === 0) return null;
-
-                return (
-                    <div key={divName} className="mb-24 last:mb-0">
-                        {/* Judul Divisi dengan Garis */}
-                        <div className="flex items-center gap-6 mb-12">
-                            <div className="h-[2px] bg-gradient-to-r from-transparent to-slate-200 flex-1"></div>
-                            <h2 className="text-3xl font-extrabold text-slate-900 uppercase tracking-widest text-center px-6 py-2 border-2 border-slate-900 rounded-full">{divName}</h2>
-                            <div className="h-[2px] bg-gradient-to-l from-transparent to-slate-200 flex-1"></div>
+      {/* Grid Anggota */}
+      <div className="container mx-auto px-6 mt-16">
+        {filteredMembers.length > 0 ? (
+            <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+            >
+                {filteredMembers.map((member) => (
+                    <motion.div 
+                        key={member.id}
+                        initial={{ y: 20, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5 }}
+                        className="bg-white rounded-2xl overflow-hidden shadow-lg border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group"
+                    >
+                        <div className="aspect-[4/5] overflow-hidden relative bg-slate-200">
+                            {member.image_url ? (
+                                <img src={member.image_url} alt={member.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <User size={64} />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent opacity-80"></div>
+                            
+                            <div className="absolute bottom-0 left-0 w-full p-6 text-white">
+                                <span className="inline-block px-3 py-1 bg-blue-600 text-[10px] font-bold uppercase tracking-wider rounded-full mb-2">
+                                    {member.department}
+                                </span>
+                                <h3 className="text-xl font-bold leading-tight mb-1">{member.name}</h3>
+                                <p className="text-slate-300 text-sm font-medium flex items-center gap-2">
+                                    <Briefcase size={12} /> {member.position}
+                                </p>
+                            </div>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {divMembers.map((member) => (
-                                <TiltCard key={member.id} className="h-full">
-                                    <div className="bg-white rounded-[2.5rem] p-8 shadow-xl hover:shadow-2xl transition-all border border-slate-100 text-center group h-full flex flex-col items-center">
-                                        <div className="w-36 h-36 mx-auto rounded-full overflow-hidden mb-6 border-[6px] border-slate-50 group-hover:border-blue-100 transition-colors shadow-inner relative">
-                                            <img src={member.image_url} alt={member.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-500 transform group-hover:scale-110"/>
-                                        </div>
-                                        <h3 className="text-xl font-bold text-slate-900 mb-1">{member.name}</h3>
-                                        <p className="text-blue-600 font-bold text-xs uppercase tracking-wide mb-4 px-3 py-1 bg-blue-50 rounded-full inline-block">{member.position}</p>
-                                        <div className="mt-auto pt-4 border-t border-slate-50 w-full">
-                                            <p className="text-slate-400 text-sm italic font-medium">"{member.motto || 'Sinergi Aksi'}"</p>
-                                        </div>
-                                    </div>
-                                </TiltCard>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })
+                    </motion.div>
+                ))}
+            </motion.div>
+        ) : (
+            <div className="text-center py-20 text-slate-500">
+                <p className="text-xl font-medium">Tidak ditemukan anggota dengan nama tersebut.</p>
+                <button onClick={() => setSearchTerm('')} className="mt-4 text-blue-600 font-bold hover:underline">Reset Pencarian</button>
+            </div>
         )}
       </div>
     </div>
   );
 };
 
-export default Members;
+export default Struktur;
