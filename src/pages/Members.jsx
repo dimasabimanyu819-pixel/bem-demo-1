@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, User, Briefcase } from 'lucide-react';
 
-const Struktur = () => {
+const Member = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // --- DATA DUMMY STATIS (Agar muncul di Vercel) ---
-  // Saya buatkan data yang lebih banyak agar terlihat seperti organisasi asli
   const [members] = useState([
     { id: 1, name: "Rizky Pratama", position: "Presiden Mahasiswa", image_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", department: "BPH" },
     { id: 2, name: "Siti Aisyah", position: "Wakil Presiden", image_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400", department: "BPH" },
@@ -105,4 +104,4 @@ const Struktur = () => {
   );
 };
 
-export default Struktur;
+export default Members;
