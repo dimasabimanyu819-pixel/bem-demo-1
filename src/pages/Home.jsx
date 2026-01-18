@@ -3,8 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSp
 import { 
   ChevronRight, Calendar, Users, Trophy, Send, ArrowUpRight, X, 
   Clock, MapPin, Share2, AlertCircle, CheckCircle2, Sparkles, Image as ImageIcon,
-  Quote, Target, Lightbulb, Play, MousePointer2 
-  // Star dihapus karena tidak dipakai
+  Quote, Target, Lightbulb, Play, MousePointer2, Plus, Minus, HelpCircle
 } from 'lucide-react'; 
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -12,18 +11,15 @@ import { Link } from 'react-router-dom';
 // --- 1. BACKGROUND DEKORASI (GRADASI BIRU-PUTIH + MORPHING HALUS) ---
 const AnimatedBlueHill = () => (
   <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-    {/* Gradasi Biru Muda (Atas) ke Putih (Bawah) */}
     <div className="absolute inset-0 bg-gradient-to-b from-blue-100 to-white"></div>
-    
-    {/* SVG Putih di Atas dengan Animasi Morphing */}
     <div className="absolute top-0 left-0 w-full overflow-hidden leading-none">
         <svg className="relative block w-full h-[150px] md:h-[250px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="none">
             <motion.path
                 animate={{
                     d: [
-                        "M0,0 H1200 V200 Q600,50 0,200 Z", // Normal
-                        "M0,0 H1200 V200 Q600,80 0,200 Z", // Sedikit landai
-                        "M0,0 H1200 V200 Q600,50 0,200 Z", // Kembali normal
+                        "M0,0 H1200 V200 Q600,50 0,200 Z", 
+                        "M0,0 H1200 V200 Q600,80 0,200 Z", 
+                        "M0,0 H1200 V200 Q600,50 0,200 Z", 
                     ]
                 }}
                 transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
@@ -34,7 +30,7 @@ const AnimatedBlueHill = () => (
   </div>
 );
 
-// --- 2. KOMPONEN TILT (3D HOVER EFFECT) ---
+// --- 2. KOMPONEN TILT ---
 const TiltCard = ({ children, className }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -64,6 +60,47 @@ const TiltCard = ({ children, className }) => {
   );
 };
 
+// --- 3. KOMPONEN FAQ ITEM (ACCORDION) ---
+const FAQItem = ({ question, answer, isOpen, onClick }) => {
+  return (
+    <motion.div 
+      initial={false}
+      className={`border border-blue-100 rounded-2xl overflow-hidden mb-4 transition-colors duration-300 ${isOpen ? 'bg-blue-50 border-blue-200' : 'bg-white hover:bg-slate-50'}`}
+    >
+      <button 
+        onClick={onClick}
+        className="flex items-center justify-between w-full p-6 text-left"
+      >
+        <span className={`text-lg font-bold ${isOpen ? 'text-blue-600' : 'text-slate-800'}`}>
+          {question}
+        </span>
+        <span className={`p-2 rounded-full transition-colors ${isOpen ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
+          {isOpen ? <Minus size={20}/> : <Plus size={20}/>}
+        </span>
+      </button>
+      
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={{
+              open: { opacity: 1, height: "auto" },
+              collapsed: { opacity: 0, height: 0 }
+            }}
+            transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+          >
+            <div className="px-6 pb-6 text-slate-600 leading-relaxed border-t border-blue-100/50 pt-4">
+              {answer}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
 // --- ANIMASI VARIAN ---
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
@@ -76,18 +113,83 @@ const staggerContainer = {
 
 const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [events, setEvents] = useState([]);
-  const [gallery, setGallery] = useState([]);
-  const [members, setMembers] = useState([]); 
-  const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [openFAQ, setOpenFAQ] = useState(0); // State untuk FAQ (index 0 terbuka default)
+
+  // --- DATA DUMMY ---
+  const [events] = useState([
+    {
+        id: 1,
+        title: "Latihan Kepemimpinan Manajemen Mahasiswa",
+        date: "20 Okt 2026",
+        time: "08:00 - 15:00",
+        location: "Auditorium UNIS",
+        image_url: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=800",
+        status: "Open",
+        description: "Membangun karakter pemimpin yang berintegritas dan adaptif di era digital. Kegiatan ini wajib bagi mahasiswa baru."
+    },
+    {
+        id: 2,
+        title: "UNIS Fair & Expo 2026",
+        date: "15 Nov 2026",
+        time: "09:00 - Selesai",
+        location: "Lapangan Utama",
+        image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=800",
+        status: "Open",
+        description: "Pameran karya mahasiswa dan bazar kewirausahaan terbesar tahun ini. Dimeriahkan oleh band ibukota."
+    },
+    {
+        id: 3,
+        title: "Seminar Nasional Teknologi",
+        date: "05 Des 2026",
+        time: "13:00 - 16:00",
+        location: "Zoom Meeting",
+        image_url: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=800",
+        status: "Closed",
+        description: "Membahas perkembangan Artificial Intelligence dalam dunia pendidikan."
+    }
+  ]);
+
+  const [gallery] = useState([
+    { id: 1, image_url: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=800", caption: "Rapat Kerja BEM" },
+    { id: 2, image_url: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=800", caption: "Bakti Sosial Desa" },
+    { id: 3, image_url: "https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=800", caption: "Inaugurasi Malam" },
+    { id: 4, image_url: "https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=800", caption: "Diskusi Publik" },
+  ]);
+
+  const [members] = useState([
+    { id: 1, name: "Rizky Pratama", position: "Presiden Mahasiswa", image_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", motto: "Bergerak atau tergantikan." },
+    { id: 2, name: "Siti Aisyah", position: "Wakil Presiden", image_url: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400", motto: "Kerja nyata untuk almamater." },
+    { id: 3, name: "Budi Santoso", position: "Sekretaris Jenderal", image_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400", motto: "Tertib administrasi pangkal keberhasilan." },
+    { id: 4, name: "Dewi Sartika", position: "Bendahara Umum", image_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400", motto: "Transparan dan Akuntabel." },
+  ]);
+
+  // --- DATA FAQ ---
+  const faqList = [
+    {
+      q: "Bagaimana cara bergabung menjadi pengurus BEM UNIS?",
+      a: "Rekrutmen terbuka (Open Recruitment) biasanya diadakan setahun sekali di awal periode kepengurusan (sekitar bulan Januari-Februari). Pantau terus Instagram resmi kami untuk informasi persyaratan dan timeline seleksi."
+    },
+    {
+      q: "Apakah mahasiswa semester akhir boleh mengikuti kegiatan BEM?",
+      a: "Tentu saja! Kegiatan BEM seperti seminar, workshop, dan event terbuka untuk seluruh mahasiswa aktif UNIS dari semua angkatan dan jurusan."
+    },
+    {
+      q: "Bagaimana cara menyampaikan aspirasi atau keluhan perkuliahan?",
+      a: "Anda bisa menggunakan formulir 'Sampaikan Aspirasi' yang ada di bagian bawah website ini. Aspirasi Anda akan langsung terhubung ke WhatsApp Center Advokasi kami dan dijamin kerahasiaannya."
+    },
+    {
+      q: "Di mana sekretariat BEM UNIS berada?",
+      a: "Sekretariat kami berlokasi di Gedung Student Center (SC) Lantai 1, Kampus Pusat UNIS. Kami buka setiap hari kerja pukul 09.00 - 16.00 WIB."
+    }
+  ];
+
+  const [loading] = useState(false);
   
-  // Parallax Setup
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   
-  // Carousel Struktur Setup
   const carouselRef = useRef(null);
   const [carouselWidth, setCarouselWidth] = useState(0);
 
@@ -97,26 +199,7 @@ const Home = () => {
     }
   }, [members]);
 
-  const FALLBACK_IMAGES = [
-    "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1920", 
-    "https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=1920"
-  ];
-
-  const slideImages = gallery.length > 0 ? gallery.map(item => item.image_url) : FALLBACK_IMAGES;
-
-  useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const [ev, gal, mem] = await Promise.all([
-                axios.get('http://localhost/bem-api/backend/api.php?action=get_events'),
-                axios.get('http://localhost/bem-api/backend/api.php?action=get_gallery'),
-                axios.get('http://localhost/bem-api/backend/api.php?action=get_members')
-            ]);
-            setEvents(ev.data); setGallery(gal.data); setMembers(mem.data); setLoading(false);
-        } catch (error) { console.error(error); setLoading(false); }
-    };
-    fetchData();
-  }, []);
+  const slideImages = gallery.length > 0 ? gallery.map(item => item.image_url) : [];
 
   useEffect(() => {
     if (slideImages.length === 0) return;
@@ -131,22 +214,15 @@ const Home = () => {
     window.open(`https://wa.me/6281234567890?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  // --- LOGIKA FILTER BPH ---
   const bphMembers = members.filter(member => {
     const pos = member.position ? member.position.toLowerCase() : '';
-    return (
-        pos.includes('presiden') || 
-        pos.includes('wakil presiden') ||
-        pos.includes('sekretaris jenderal') ||
-        pos.includes('bendahara umum') ||
-        pos.includes('ketua') 
-    );
+    return pos.includes('presiden') || pos.includes('wakil') || pos.includes('sekretaris') || pos.includes('bendahara') || pos.includes('ketua');
   });
 
   return (
     <div className="bg-slate-50 text-slate-900 font-sans overflow-hidden selection:bg-blue-600 selection:text-white perspective-1000" ref={containerRef}>
       
-      {/* === 1. HERO SECTION === */}
+      {/* 1. HERO SECTION */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden bg-slate-900 pb-32">
         <motion.div className="absolute inset-0 z-0" style={{ y: yBg }}>
            <AnimatePresence mode='wait'>
@@ -178,7 +254,6 @@ const Home = () => {
         </div>
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2, duration: 1 }} className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20"><span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Scroll Down</span><div className="w-[1px] h-12 bg-gradient-to-b from-yellow-500 to-transparent"></div></motion.div>
         
-        {/* WAVE SEPARATOR BAWAH */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-none z-10 pointer-events-none">
             <svg className="relative block w-full h-[120px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
                 <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-slate-50/5"></path>
@@ -186,7 +261,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* === 2. STATS === */}
+      {/* 2. STATS */}
       <section className="relative z-30 -mt-24 pb-24">
         <div className="container mx-auto px-6">
           <TiltCard className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-10 border border-white/50 relative overflow-hidden">
@@ -204,7 +279,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* === 3. VIDEO & TENTANG KAMI === */}
+      {/* 3. VIDEO & TENTANG KAMI */}
       <section className="py-24 relative overflow-hidden bg-white">
          <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
          <div className="container mx-auto px-6 flex flex-col lg:flex-row items-center gap-16 relative z-10">
@@ -229,7 +304,7 @@ const Home = () => {
          </div>
       </section>
 
-      {/* === 4. VISI & MISI === */}
+      {/* 4. VISI & MISI */}
       <section className="py-24 bg-slate-50 relative">
          <div className="container mx-auto px-6 relative z-10">
             <div className="grid md:grid-cols-2 gap-8">
@@ -239,7 +314,7 @@ const Home = () => {
          </div>
       </section>
 
-      {/* === 5. SAMBUTAN KETUA === */}
+      {/* 5. SAMBUTAN KETUA */}
       <section className="py-24 bg-white relative">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center gap-16 relative z-10">
             <div className="w-full md:w-5/12 relative group">
@@ -254,10 +329,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* === 6. STRUKTUR INTI (FILTERED BPH ONLY & GRADIENT BG) === */}
+      {/* 6. STRUKTUR INTI (FILTERED BPH ONLY) */}
       <section className="relative overflow-hidden pt-32 md:pt-48 pb-24" id="struktur">
         <AnimatedBlueHill />
-
         <div className="container mx-auto px-6 text-center relative z-10">
             <motion.div variants={fadeInUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-16 max-w-2xl mx-auto">
                 <span className="text-blue-600 font-bold tracking-widest text-sm uppercase">Kepemimpinan</span>
@@ -300,10 +374,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* === 7. EVENT SECTION (GRADIENT BG) === */}
+      {/* 7. EVENT SECTION */}
       <section className="relative overflow-hidden pt-32 md:pt-48 pb-24" id="event">
         <AnimatedBlueHill />
-
         <div className="container mx-auto px-6 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div><span className="text-blue-600 font-bold text-sm tracking-widest uppercase flex items-center gap-2"><Calendar size={16}/> Agenda Terbaru</span><h2 className="text-4xl font-extrabold text-slate-900 mt-2">Program Unggulan</h2></div>
@@ -331,7 +404,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* === 8. GALERI === */}
+      {/* 8. GALERI */}
       <section className="py-32 relative overflow-hidden bg-slate-900" id="galeri">
         <div className="absolute inset-0 z-0">
             <AnimatePresence mode='wait'>
@@ -358,7 +431,32 @@ const Home = () => {
         </div>
       </section>
 
-      {/* === 9. ASPIRASI === */}
+      {/* 9. FAQ SECTION (ADDED NEW!) */}
+      <section className="py-24 relative overflow-hidden bg-white" id="faq">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-50"></div>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-blue-600 font-bold text-sm uppercase flex items-center justify-center gap-2 mb-2"><HelpCircle size={16}/> Informasi</span>
+              <h2 className="text-4xl font-extrabold text-slate-900 mt-2">Sering Ditanyakan (FAQ)</h2>
+            </div>
+            
+            <div className="space-y-4">
+              {faqList.map((item, index) => (
+                <FAQItem 
+                  key={index}
+                  question={item.q}
+                  answer={item.a}
+                  isOpen={openFAQ === index}
+                  onClick={() => setOpenFAQ(openFAQ === index ? -1 : index)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. ASPIRASI */}
       <section className="py-32 relative overflow-hidden bg-slate-900 text-white" id="aspirasi">
         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
         <div className="absolute top-0 left-0 w-full overflow-hidden leading-none z-20"><svg className="relative block w-full h-[80px]" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" className="fill-slate-900"></path></svg></div>
